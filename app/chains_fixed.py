@@ -43,34 +43,50 @@ class Chain:
             raise OutputParserException("Context too big. Unable to parse jobs.")
         return res if isinstance(res, list) else [res]
     
-
     def write_mail(self, job, links):
-        # Remove duplicate links
-        if isinstance(links, list):
-            links = list(set([meta['links'] for meta in links if 'links' in meta]))
-        link_list = "\n".join(links)
+    # Accept both raw strings and dicts with 'links' key
+     if isinstance(links, list):
+        clean_links = set()
+        for link in links:
+            if isinstance(link, dict) and "links" in link:
+                clean_links.add(link["links"].strip())
+            elif isinstance(link, str):
+                clean_links.add(link.strip())
+        links = list(clean_links)
+     else:
+        links = []
 
-        prompt_email = PromptTemplate.from_template(
-            """
-            ### JOB DESCRIPTION:
-            {job_description}
+    # 🔥 Only take the first link
+     link_list = links[0] if links else ""
 
-            ### INSTRUCTION:
-            You are Aditya, a Campaign Operations Associate from Chennai. 
-            Your job is to write a cold email to the client regarding the job mentioned above describing your capability
-            in fulfilling their needs.
-            Also add your portfolio links: {link_list}
-            Do not provide a preamble.
+     prompt_email = PromptTemplate.from_template(
+        """
+        ### JOB DESCRIPTION:
+        {job_description}
 
-            ### EMAIL (NO PREAMBLE):
-            """
-        )
-        chain_email = prompt_email | self.llm
-        res = chain_email.invoke({
-            "job_description": str(job),
-            "link_list": link_list
-        })
-        return res.content
+        ### INSTRUCTION:
+        You are Aditya, a Campaign Operations Associate based in Chennai, writing a professional cold email for the above job opportunity.
+
+        Structure the email as follows:
+
+        - Subject line (short and relevant)
+        - A warm and professional greeting
+        - A clear and concise self-introduction
+        - Relevant skills and experience aligned to the job description
+        - Mention of the portfolio link: {link_list}
+        - A polite and enthusiastic closing line
+
+        The tone should be professional yet human, confident but humble. Use short paragraphs and natural language. Avoid sounding robotic or overly formal. DO NOT include any explanations or markdown, just plain text email.
+
+        ### FORMATTED EMAIL:
+        """
+     )
+     chain_email = prompt_email | self.llm
+     res = chain_email.invoke({
+        "job_description": str(job),
+        "link_list": link_list
+     })
+     return res.content
 
 
 if __name__ == "__main__":
