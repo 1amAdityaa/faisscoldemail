@@ -1,6 +1,6 @@
 # 🚀 Cold Email Generator
 
-Turn job descriptions into personalized cold emails — powered by **LLaMA-3** (via Together AI), **Streamlit**, **LangChain**, and **ChromaDB**.
+Turn job descriptions into personalized cold emails — powered by **LLaMA-3** (via Together AI), **Streamlit**, **LangChain**, and **FAISS**.
 
 ![App Screenshot](https://github.com/1amAdityaa/updated-cold-email/blob/main/coldemail.png)
 
@@ -22,7 +22,8 @@ Paste any job posting URL and this app will:
 - [Streamlit](https://streamlit.io/) – for the frontend
 - [LangChain](https://www.langchain.com/) – for chaining LLM prompts
 - [Together AI](https://www.together.ai/) – runs LLaMA-3 model
-- [ChromaDB](https://www.trychroma.com/) – for vector-based skill-link matching
+- [FAISS](https://github.com/facebookresearch/faiss) – for vector-based skill-link matching
+- [Sentence-Transformers](https://www.sbert.net/) – for skill embeddings
 - [Pandas](https://pandas.pydata.org/) – for handling CSV portfolio
 
 ---
@@ -33,7 +34,7 @@ Paste any job posting URL and this app will:
 coldemail/
 ├── app.py               # 🚀 Streamlit UI
 ├── chains.py            # 🤖 LLM prompt logic
-├── portfolio.py         # 🔗 Skill → link search
+├── portfolio.py         # 🔗 Skill → link search (FAISS)
 ├── utils.py             # 🧼 clean_text function
 ├── .env                 # 🔐 API key for Together
 ├── requirements.txt     # 📦 Python dependencies
@@ -84,6 +85,9 @@ React,https://1-am-aditya.netlify.app/
 Java,https://1-am-aditya.netlify.app/
 ```
 
+> ⚠️ Recommended: One row per skill for best FAISS matching.  
+> OR split multiple skills programmatically using `.split()`.
+
 ---
 
 ## ▶️ Run the App Locally
@@ -110,7 +114,7 @@ App will open at: `http://localhost:8501`
 
 - 🔗 Paste job URLs (career pages, etc.)
 - 🧠 Extracts job info using LLaMA-3
-- 🧰 Smart matching from your portfolio
+- 🧰 Smart portfolio link matching via FAISS
 - 💌 Cold email output in Markdown
 - 📱 Responsive UI with collapsible sections
 
