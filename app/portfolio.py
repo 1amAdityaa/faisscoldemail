@@ -1,6 +1,6 @@
 import pandas as pd
 from langchain.vectorstores import FAISS
-from langchain.embeddings import HuggingFaceEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings  # ✅ updated import
 from langchain.schema import Document
 
 class Portfolio:
@@ -8,22 +8,19 @@ class Portfolio:
         self.file_path = file_path
         self.data = pd.read_csv(file_path)
 
-        # Load embeddings and build FAISS index
         self.embeddings = HuggingFaceEmbeddings(model_name='sentence-transformers/all-MiniLM-L6-v2')
         self.db = None
 
     def load_portfolio(self):
-        documents = [
-            Document(
-                page_content=row["Techstack"],
-                metadata={"links": row["link"]}
-            ) for _, row in self.data.iterrows()
-        ]
+        documents = []
+        for _, row in self.data.iterrows():
+            techs = row["Techstack"].split()
+            for tech in techs:
+                documents.append(Document(page_content=tech, metadata={"links": row["link"]}))
         self.db = FAISS.from_documents(documents, self.embeddings)
 
     def query_links(self, skills):
         if not self.db:
             raise ValueError("Database not loaded. Call load_portfolio() first.")
-
         results = self.db.similarity_search_with_score(' '.join(skills), k=1)
         return [res[0].metadata for res in results if res]

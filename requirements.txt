@@ -9,3 +9,4 @@ transformers
 torch
 pandas
 python-dotenv
+langchain-huggingface
