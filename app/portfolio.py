@@ -1,5 +1,5 @@
 import pandas as pd
-from langchain.vectorstores import FAISS
+from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings  # ✅ updated import
 from langchain.schema import Document
 
