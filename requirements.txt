@@ -1,7 +1,11 @@
+
 streamlit
 langchain
 langchain-together
 langchain-community
-chromadb
-python-dotenv
+faiss-cpu
+sentence-transformers
+transformers
+torch
 pandas
+python-dotenv
