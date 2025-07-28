@@ -1,16 +1,20 @@
 import os
 from dotenv import load_dotenv
 
-# ✅ Load environment variables first
+# ✅ Load env variables early
 load_dotenv()
 
-# ✅ Optional fallback (for testing)
-if "USER_AGENT" not in os.environ:
-    os.environ["USER_AGENT"] = "coldemailgen/1.0"
+# ✅ Set USER_AGENT fallback if not present
+os.environ.setdefault("USER_AGENT", "coldemailgen/1.0")
+print("USER_AGENT:", os.getenv("USER_AGENT"))
 
-print("USER_AGENT:", os.getenv("USER_AGENT"))  # Debug print
+# ✅ Hugging Face login (if token is available)
+if os.getenv("HF_TOKEN"):
+    from huggingface_hub import login
+    login(token=os.getenv("HF_TOKEN"))
+    print("🔐 Hugging Face login successful.")
 
-# ✅ Import AFTER env is loaded
+# ✅ Import LLM-related stuff after env setup
 from langchain_together import ChatTogether
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import JsonOutputParser
@@ -45,27 +49,26 @@ class Chain:
         )
         chain_extract = prompt_extract | self.llm
         res = chain_extract.invoke(input={"page_data": cleaned_text})
+
         try:
             json_parser = JsonOutputParser()
             res = json_parser.parse(res.content)
         except OutputParserException:
             raise OutputParserException("Context too big. Unable to parse jobs.")
+
         return res if isinstance(res, list) else [res]
     
     def write_mail(self, job, links):
+        # Normalize links to list of cleaned strings
+        clean_links = set()
         if isinstance(links, list):
-            clean_links = set()
             for link in links:
                 if isinstance(link, dict) and "links" in link:
                     clean_links.add(link["links"].strip())
                 elif isinstance(link, str):
                     clean_links.add(link.strip())
-            links = list(clean_links)
-        else:
-            links = []
 
-        # 🔥 Only take the first link
-        link_list = links[0] if links else ""
+        link_list = list(clean_links)[0] if clean_links else ""
 
         prompt_email = PromptTemplate.from_template(
             """
@@ -94,6 +97,7 @@ class Chain:
             "job_description": str(job),
             "link_list": link_list
         })
+
         return res.content
 
 
