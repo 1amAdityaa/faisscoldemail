@@ -1,7 +1,11 @@
+
 import pandas as pd
+from dotenv import load_dotenv
 from langchain_community.vectorstores import FAISS
-from langchain_huggingface import HuggingFaceEmbeddings  # ✅ updated import
-from langchain.schema import Document
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_core.documents import Document
+
+load_dotenv()
 
 class Portfolio:
     def __init__(self, file_path="app/resources/my_data.csv"):

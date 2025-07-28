@@ -1,12 +1,21 @@
-
 import os
+from dotenv import load_dotenv
+
+# ✅ Load environment variables first
+load_dotenv()
+
+# ✅ Optional fallback (for testing)
+if "USER_AGENT" not in os.environ:
+    os.environ["USER_AGENT"] = "coldemailgen/1.0"
+
+print("USER_AGENT:", os.getenv("USER_AGENT"))  # Debug print
+
+# ✅ Import AFTER env is loaded
 from langchain_together import ChatTogether
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.exceptions import OutputParserException
-from dotenv import load_dotenv
 
-load_dotenv()
 
 class Chain:
     def __init__(self):
@@ -44,50 +53,49 @@ class Chain:
         return res if isinstance(res, list) else [res]
     
     def write_mail(self, job, links):
-    # Accept both raw strings and dicts with 'links' key
-     if isinstance(links, list):
-        clean_links = set()
-        for link in links:
-            if isinstance(link, dict) and "links" in link:
-                clean_links.add(link["links"].strip())
-            elif isinstance(link, str):
-                clean_links.add(link.strip())
-        links = list(clean_links)
-     else:
-        links = []
+        if isinstance(links, list):
+            clean_links = set()
+            for link in links:
+                if isinstance(link, dict) and "links" in link:
+                    clean_links.add(link["links"].strip())
+                elif isinstance(link, str):
+                    clean_links.add(link.strip())
+            links = list(clean_links)
+        else:
+            links = []
 
-    # 🔥 Only take the first link
-     link_list = links[0] if links else ""
+        # 🔥 Only take the first link
+        link_list = links[0] if links else ""
 
-     prompt_email = PromptTemplate.from_template(
-        """
-        ### JOB DESCRIPTION:
-        {job_description}
+        prompt_email = PromptTemplate.from_template(
+            """
+            ### JOB DESCRIPTION:
+            {job_description}
 
-        ### INSTRUCTION:
-        You are Aditya, a Campaign Operations Associate based in Chennai, writing a professional cold email for the above job opportunity.
+            ### INSTRUCTION:
+            You are Aditya, a Campaign Operations Associate based in Chennai, writing a professional cold email for the above job opportunity.
 
-        Structure the email as follows:
+            Structure the email as follows:
 
-        - Subject line (short and relevant)
-        - A warm and professional greeting
-        - A clear and concise self-introduction
-        - Relevant skills and experience aligned to the job description
-        - Mention of the portfolio link: {link_list}
-        - A polite and enthusiastic closing line
+            - Subject line (short and relevant)
+            - A warm and professional greeting
+            - A clear and concise self-introduction
+            - Relevant skills and experience aligned to the job description
+            - Mention of the portfolio link: {link_list}
+            - A polite and enthusiastic closing line
 
-        The tone should be professional yet human, confident but humble. Use short paragraphs and natural language. Avoid sounding robotic or overly formal. DO NOT include any explanations or markdown, just plain text email.
+            The tone should be professional yet human, confident but humble. Use short paragraphs and natural language. Avoid sounding robotic or overly formal. DO NOT include any explanations or markdown, just plain text email.
 
-        ### FORMATTED EMAIL:
-        """
-     )
-     chain_email = prompt_email | self.llm
-     res = chain_email.invoke({
-        "job_description": str(job),
-        "link_list": link_list
-     })
-     return res.content
+            ### FORMATTED EMAIL:
+            """
+        )
+        chain_email = prompt_email | self.llm
+        res = chain_email.invoke({
+            "job_description": str(job),
+            "link_list": link_list
+        })
+        return res.content
 
 
 if __name__ == "__main__":
-    print(os.getenv("TOGETHER_API_KEY"))
+    print("TOGETHER_API_KEY:", os.getenv("TOGETHER_API_KEY"))
