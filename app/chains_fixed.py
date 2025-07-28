@@ -1,20 +1,26 @@
 import os
-from dotenv import load_dotenv
+import streamlit as st
 
-# ✅ Load env variables early
-load_dotenv()
+# ✅ Load secrets (works on Streamlit Cloud)
+TOGETHER_API_KEY = st.secrets.get("TOGETHER_API_KEY")
+HF_TOKEN = st.secrets.get("HF_TOKEN", None)
+USER_AGENT = st.secrets.get("USER_AGENT", "coldemailgen/1.0")
 
-# ✅ Set USER_AGENT fallback if not present
-os.environ.setdefault("USER_AGENT", "coldemailgen/1.0")
-print("USER_AGENT:", os.getenv("USER_AGENT"))
+# ✅ Set environment variables (for Together API + HF SDK)
+os.environ["TOGETHER_API_KEY"] = TOGETHER_API_KEY
+os.environ["USER_AGENT"] = USER_AGENT
 
-# ✅ Hugging Face login (if token is available)
-if os.getenv("HF_TOKEN"):
+print("USER_AGENT:", USER_AGENT)
+
+# ✅ Hugging Face login (optional)
+if HF_TOKEN:
     from huggingface_hub import login
-    login(token=os.getenv("HF_TOKEN"))
+    login(token=HF_TOKEN)
     print("🔐 Hugging Face login successful.")
+else:
+    print("⚠️ No Hugging Face token provided.")
 
-# ✅ Import LLM-related stuff after env setup
+# ✅ Import LangChain stuff after environment is set
 from langchain_together import ChatTogether
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import JsonOutputParser
@@ -25,7 +31,7 @@ class Chain:
     def __init__(self):
         self.llm = ChatTogether(
             model="meta-llama/Llama-3-70b-chat-hf",
-            together_api_key=os.getenv("TOGETHER_API_KEY")
+            together_api_key=TOGETHER_API_KEY
         )
 
     def extract_jobs(self, cleaned_text):
@@ -57,9 +63,8 @@ class Chain:
             raise OutputParserException("Context too big. Unable to parse jobs.")
 
         return res if isinstance(res, list) else [res]
-    
+
     def write_mail(self, job, links):
-        # Normalize links to list of cleaned strings
         clean_links = set()
         if isinstance(links, list):
             for link in links:
@@ -102,4 +107,4 @@ class Chain:
 
 
 if __name__ == "__main__":
-    print("TOGETHER_API_KEY:", os.getenv("TOGETHER_API_KEY"))
+    print("✅ TOGETHER_API_KEY:", TOGETHER_API_KEY)
